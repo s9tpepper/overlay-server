@@ -2,6 +2,20 @@ const PrivMessage = (_privMessage) => {
   // Nothing to do for privmessage
 };
 
+const RedeemMessage = (redeemMessage) => {
+  const { display_name, profile_url, title } = redeemMessage;
+
+  const messageHandler = redemptions[title];
+  if (typeof messageHandler === "function") {
+    messageHandler(null, display_name, null, null, profile_url);
+  }
+};
+
+const twitchMessages = {
+  PrivMessage,
+  RedeemMessage,
+};
+
 const playIntro = (_id, display_name, _title, _prompt, profile_url) => {
   console.log("playIntro()");
 
@@ -37,36 +51,9 @@ const redemptions = {
   "Play Intro": playIntro,
 };
 
-const messageDataHandler = (messageData) => {
-  console.log("MessageData()");
-  const {
-    data: {
-      redemption: {
-        user: { id, display_name, profile_url },
-        reward: { title, prompt },
-      },
-    },
-  } = messageData;
-
-  console.log(
-    `id: ${id}, display_name: ${display_name}, title: ${title}, prompt: ${prompt}`,
-  );
-
-  const messageHandler = redemptions[title];
-  console.log(`messageHandler: ${messageHandler}`);
-
-  if (typeof messageHandler === "function") {
-    messageHandler(id, display_name, title, prompt, profile_url);
-  }
-};
-
-const twitchMessages = {
-  PrivMessage,
-};
-
 const connect = () => {
   // const url = "ws://127.0.0.1:54321";
-  const url = "ws://s9tpepper.local:8765";
+  const url = "ws://quintessa:8766";
   const socket = new WebSocket(url);
 
   socket.addEventListener("open", () => {
@@ -77,19 +64,9 @@ const connect = () => {
     const { data } = event;
     const message = JSON.parse(data);
 
-    const { TwitchMessage = false, MessageData = false } = message;
-    if (TwitchMessage) {
-      const keys = Object.keys(TwitchMessage);
-      keys.map((key) => {
-        const handler = twitchMessages[key];
-        if (typeof handler === "function") {
-          handler(TwitchMessage[key]);
-        }
-      });
-    }
-
-    if (MessageData) {
-      messageDataHandler(MessageData);
+    const { RedeemMessage } = message;
+    if (RedeemMessage) {
+      twitchMessages.RedeemMessage(RedeemMessage);
     }
 
     console.log(JSON.stringify(message, null, 2));
